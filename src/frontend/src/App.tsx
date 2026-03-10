@@ -25,11 +25,13 @@ import {
   Layers,
   RefreshCw,
   Sparkles,
+  Trash2,
+  UploadCloud,
   Video,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const VARIATION_COLORS: Record<string, string> = {
@@ -121,6 +123,159 @@ function CaptionCard({
   );
 }
 
+// ── Video Upload Section ──────────────────────────────────────────────────────
+function VideoUploadSection({
+  videoUrl,
+  videoName,
+  onFile,
+  onRemove,
+}: {
+  videoUrl: string | null;
+  videoName: string;
+  onFile: (file: File) => void;
+  onRemove: () => void;
+}) {
+  const inputId = "video-file-input";
+  const [dragging, setDragging] = useState(false);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLLabelElement>) => {
+      e.preventDefault();
+      setDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith("video/")) {
+        toast.error("Please drop a valid video file.");
+        return;
+      }
+      onFile(file);
+    },
+    [onFile],
+  );
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => setDragging(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onFile(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="space-y-3">
+      <span className="text-sm font-medium text-foreground">
+        <Video className="mr-1.5 inline h-3.5 w-3.5" />
+        Upload Your Video{" "}
+        <span className="font-normal text-muted-foreground">(optional)</span>
+      </span>
+
+      {videoUrl ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="overflow-hidden rounded-xl border border-border bg-card"
+        >
+          {/* Video player */}
+          <div className="relative bg-black">
+            {/* biome-ignore lint/a11y/useMediaCaption: user-uploaded local video; captions are user-provided */}
+            <video
+              src={videoUrl}
+              controls
+              className="max-h-64 w-full object-contain"
+            />
+          </div>
+
+          {/* File info + remove */}
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/15">
+                <Video className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <span className="truncate text-xs font-medium text-foreground">
+                {videoName}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRemove}
+              className="shrink-0 gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+              data-ocid="video.delete_button"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove
+            </Button>
+          </div>
+        </motion.div>
+      ) : (
+        <label
+          htmlFor={inputId}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          data-ocid="video.dropzone"
+          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-all duration-200 ${
+            dragging
+              ? "scale-[1.01] border-primary bg-primary/8"
+              : "border-border bg-background/30 hover:border-primary/60 hover:bg-primary/5"
+          }`}
+        >
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors duration-200 ${
+              dragging ? "bg-primary/20" : "bg-muted"
+            }`}
+          >
+            <UploadCloud
+              className={`h-6 w-6 transition-colors duration-200 ${
+                dragging ? "text-primary" : "text-muted-foreground"
+              }`}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Drop your video here
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              or{" "}
+              <span className="font-semibold text-primary underline-offset-2 hover:underline">
+                browse to upload
+              </span>{" "}
+              — MP4, WebM, MOV, AVI supported
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="pointer-events-none mt-1 gap-2 border-border"
+            data-ocid="video.upload_button"
+            tabIndex={-1}
+            aria-hidden
+          >
+            <UploadCloud className="h-3.5 w-3.5" />
+            Choose Video
+          </Button>
+        </label>
+      )}
+
+      <input
+        id={inputId}
+        type="file"
+        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/*"
+        className="hidden"
+        onChange={handleInputChange}
+        aria-label="Upload video file"
+      />
+    </div>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [topic, setTopic] = useState("");
   const [template, setTemplate] = useState(TEMPLATES[0]);
@@ -130,6 +285,37 @@ export default function App() {
   const [seed, setSeed] = useState(0);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
+
+  // Video state
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoName, setVideoName] = useState("");
+  // Keep a ref to the latest URL for unmount cleanup
+  const videoUrlRef = useRef<string | null>(null);
+  videoUrlRef.current = videoUrl;
+
+  const handleVideoFile = useCallback((file: File) => {
+    setVideoUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setVideoName(file.name);
+    toast.success("Video loaded! Watch it while you generate captions.");
+  }, []);
+
+  const handleVideoRemove = useCallback(() => {
+    setVideoUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setVideoName("");
+  }, []);
+
+  // Revoke object URL on unmount to free memory
+  useEffect(() => {
+    return () => {
+      if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
+    };
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     if (!topic.trim()) {
@@ -266,6 +452,23 @@ export default function App() {
             </div>
 
             <div className="space-y-5">
+              {/* ── Video Upload ── */}
+              <VideoUploadSection
+                videoUrl={videoUrl}
+                videoName={videoName}
+                onFile={handleVideoFile}
+                onRemove={handleVideoRemove}
+              />
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-border/60" />
+                <span className="text-xs text-muted-foreground">
+                  then describe your video
+                </span>
+                <div className="h-px flex-1 bg-border/60" />
+              </div>
+
+              {/* ── Topic ── */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">
                   Video Topic or Description
