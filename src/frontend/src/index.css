@@ -1,0 +1,142 @@
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/assets/fonts/Satoshi.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark mode as default */
+    --background: 0.12 0.006 268;
+    --foreground: 0.95 0.008 268;
+    --card: 0.16 0.008 268;
+    --card-foreground: 0.95 0.008 268;
+    --popover: 0.16 0.008 268;
+    --popover-foreground: 0.95 0.008 268;
+    --primary: 0.76 0.14 192;
+    --primary-foreground: 0.1 0.006 268;
+    --secondary: 0.22 0.01 268;
+    --secondary-foreground: 0.9 0.008 268;
+    --muted: 0.2 0.008 268;
+    --muted-foreground: 0.58 0.015 268;
+    --accent: 0.8 0.16 72;
+    --accent-foreground: 0.1 0.006 268;
+    --destructive: 0.62 0.22 27;
+    --destructive-foreground: 0.98 0 0;
+    --border: 0.24 0.01 268;
+    --input: 0.2 0.008 268;
+    --ring: 0.76 0.14 192;
+    --radius: 0.75rem;
+    --chart-1: 0.76 0.14 192;
+    --chart-2: 0.8 0.16 72;
+    --chart-3: 0.68 0.18 320;
+    --chart-4: 0.72 0.18 140;
+    --chart-5: 0.65 0.18 40;
+    --sidebar: 0.14 0.007 268;
+    --sidebar-foreground: 0.9 0.008 268;
+    --sidebar-primary: 0.76 0.14 192;
+    --sidebar-primary-foreground: 0.1 0.006 268;
+    --sidebar-accent: 0.2 0.008 268;
+    --sidebar-accent-foreground: 0.9 0.008 268;
+    --sidebar-border: 0.22 0.01 268;
+    --sidebar-ring: 0.76 0.14 192;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      oklch(0.76 0.14 192),
+      oklch(0.8 0.16 72),
+      oklch(0.76 0.14 192)
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px oklch(0.76 0.14 192 / 0.3), 0 0 60px
+      oklch(0.76 0.14 192 / 0.1);
+  }
+
+  .card-glow:hover {
+    box-shadow: 0 0 0 1px oklch(0.76 0.14 192 / 0.5), 0 8px 32px
+      oklch(0.76 0.14 192 / 0.15);
+  }
+
+  .noise-bg {
+    position: relative;
+  }
+  .noise-bg::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .hashtag {
+    @apply text-primary font-medium;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px oklch(0.76 0.14 192 / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px oklch(0.76 0.14 192 / 0.5);
+  }
+}
